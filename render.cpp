@@ -1,5 +1,26 @@
 /*
-Examples/Pepper/getting-started cpp version
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+*/
+/**
+\example Pepper/getting-started-cpp/render.cpp
+
+Author: Teresa Pelinski (@pelinski)
+Debouncer class taken from the C++ Real-Time Audio Programming with Bela course
+(Lecture 14: ADSR)
+
+This example contains everything you need to get started with PEPPER and is a
+good starting point for new projects. It is a cpp version of the
+Pepper/getting-started example Pd patch. We initialise the buttons and LEDs,
+print when a button is pushed, flash leds in a sequence, pass CV in to CV out,
+pass audio in to audio out, and generate a test tone. We also send the first
+three channels of the CV inputs to the scope. Button debouncing is used to avoid
+multiple readings of the same button press.
+
 */
 
 #include "Debouncer.h"
@@ -16,6 +37,7 @@ float gInverseSampleRate;
 float gFrequency[2] = {330.0, 0.25};
 float gPhase[2] = {0.0, 0.0};
 
+// array to save the first 3 channels of CV inputs to log in the scope
 float gScopeData[3] = {0.0, 0.0, 0.0};
 
 // Buttons
@@ -93,7 +115,7 @@ void render(BelaContext *context, void *userData) {
         float _in =
             analogRead(context, n / gAudioFramesPerAnalogFrame, channel);
         analogWrite(context, n, channel, _in);
-        // add first 3 channels to scopeData
+        // add first 3 CV in channels to scopeData
         if (channel < 3) {
           gScopeData[channel] = _in;
         }
