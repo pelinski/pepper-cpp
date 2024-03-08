@@ -30,7 +30,6 @@ multiple readings of the same button press.
 
 Scope scope;
 
-int gAudioFramesPerAnalogFrame = 0;
 float gInverseSampleRate;
 
 // two oscillators
@@ -63,8 +62,7 @@ bool setup(BelaContext *context, void *userData) {
             "Error: for this project you need at least two analog inputs\n");
     return false;
   }
-  if (context->analogFrames)
-    gAudioFramesPerAnalogFrame = context->audioFrames / context->analogFrames;
+
   gInverseSampleRate = 1.0 / context->audioSampleRate;
 
   // set up digital IO pins
@@ -107,45 +105,45 @@ void render(BelaContext *context, void *userData) {
       float out = audioRead(context, n, ch) + osc;
       audioWrite(context, n, ch, out);
     }
+  }
 
-    if (gAudioFramesPerAnalogFrame && !(n % gAudioFramesPerAnalogFrame)) {
-      // pass CV in to CV out
-      for (unsigned int channel = 0; channel < context->analogInChannels;
-           channel++) {
-        float _in =
-            analogRead(context, n / gAudioFramesPerAnalogFrame, channel);
-        analogWrite(context, n, channel, _in);
-        // add first 3 CV in channels to scopeData
-        if (channel < 3) {
-          gScopeData[channel] = _in;
-        }
+  for (unsigned int n = 0; n < context->analogFrames; n++) {
+
+    // pass CV in to CV out
+    for (unsigned int channel = 0; channel < context->analogInChannels;
+         channel++) {
+      float _in = analogRead(context, n, channel);
+      analogWrite(context, n, channel, _in);
+      // add first 3 CV in channels to scopeData
+      if (channel < 3) {
+        gScopeData[channel] = _in;
+      }
+    }
+  }
+
+  for (unsigned int n = 0; n < context->digitalFrames; n++) {
+
+    // print button values on change
+    for (unsigned int i = 0; i < 4; i++) {
+      unsigned int buttonValue =
+          gDebouncer[i].process(digitalRead(context, n, gButtonPins[i]));
+      if (buttonValue != gPrevButtonValue[i]) {
+        rt_printf("Button %d: %d\n", i, buttonValue);
+        gPrevButtonValue[i] = buttonValue;
       }
     }
 
-    for (unsigned int n = 0; n < context->digitalFrames; n++) {
-
-      // print button values on change
-      for (unsigned int i = 0; i < 4; i++) {
-        unsigned int buttonValue =
-            gDebouncer[i].process(digitalRead(context, n, gButtonPins[i]));
-        if (buttonValue != gPrevButtonValue[i]) {
-          rt_printf("Button %d: %d\n", i, buttonValue);
-          gPrevButtonValue[i] = buttonValue;
-        }
+    // toggle LEDs every gMetroInterval
+    if (++gMetroCount >= gMetroInterval) {
+      gMetroCount = 0;
+      digitalWrite(context, n, gLedPins[gLedIdx], 1);
+      if (gLedIdx > 0) {
+        digitalWrite(context, n, gLedPins[gLedIdx - 1], 0);
+      } else {
+        digitalWrite(context, n, gLedPins[9], 0);
       }
-
-      // toggle LEDs every gMetroInterval
-      if (++gMetroCount >= gMetroInterval) {
-        gMetroCount = 0;
-        digitalWrite(context, n, gLedPins[gLedIdx], 1);
-        if (gLedIdx > 0) {
-          digitalWrite(context, n, gLedPins[gLedIdx - 1], 0);
-        } else {
-          digitalWrite(context, n, gLedPins[9], 0);
-        }
-        if (++gLedIdx > 9) {
-          gLedIdx = 0;
-        }
+      if (++gLedIdx > 9) {
+        gLedIdx = 0;
       }
     }
 
