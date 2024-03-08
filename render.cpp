@@ -9,7 +9,7 @@ http://bela.io
 /**
 \example Pepper/getting-started-cpp/render.cpp
 
-Author: Teresa Pelinski (@pelinski)
+Author: Teresa Pelinski (https://github.com/pelinski)
 Debouncer class taken from the C++ Real-Time Audio Programming with Bela course
 (Lecture 14: ADSR)
 
